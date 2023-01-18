@@ -10,7 +10,7 @@ const argv = yargs
   .version(false)
   .argv;
 
-const client = new MongoClient("mongodb://localhost:27017", {
+const client = new MongoClient(process.env.MONGODB_URL || "mongodb://localhost:27017", {
   useUnifiedTopology: true
 });
 
