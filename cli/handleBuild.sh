@@ -58,5 +58,5 @@ docker run --rm --network="$NETWORK" -e MONGODB_URL=$MONGODB_URL -v $(pwd):/app 
 	--storagePath=/storage \
 	$DOWNLOADS
 
-rm -rf ./repo
+rm -rf ./repo/*
 rm -rf ./files/*
