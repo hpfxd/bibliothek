@@ -23,8 +23,6 @@
  */
 package io.papermc.bibliothek.database.model;
 
-import io.papermc.bibliothek.util.NameSource;
-import io.papermc.bibliothek.util.TimeSource;
 import java.time.Instant;
 import java.util.Comparator;
 import org.bson.types.ObjectId;
@@ -42,9 +40,9 @@ public record Version(
   ObjectId group,
   String name,
   Instant time
-) implements NameSource, TimeSource {
+) {
   // NOTE: this pattern cannot contain any capturing groups
   @Language("RegExp")
   public static final String PATTERN = "(?:latest|[0-9.]+-?(?:pre|SNAPSHOT)?(?:[0-9.]+)?)?";
-  public static final Comparator<Version> COMPARATOR = Comparator.comparing(TimeSource::time);
+  public static final Comparator<Version> COMPARATOR = Comparator.comparing(Version::time);
 }

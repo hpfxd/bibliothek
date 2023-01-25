@@ -25,10 +25,8 @@ package io.papermc.bibliothek.controller.v2;
 
 import io.papermc.bibliothek.database.model.Project;
 import io.papermc.bibliothek.database.model.Version;
-import io.papermc.bibliothek.database.model.VersionFamily;
 import io.papermc.bibliothek.database.repository.ProjectCollection;
 import io.papermc.bibliothek.database.repository.VersionCollection;
-import io.papermc.bibliothek.database.repository.VersionFamilyCollection;
 import io.papermc.bibliothek.exception.ProjectNotFound;
 import io.papermc.bibliothek.util.HTTP;
 import io.swagger.v3.oas.annotations.Operation;
@@ -54,17 +52,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProjectController {
   private static final CacheControl CACHE = HTTP.sMaxAgePublicCache(Duration.ofMinutes(30));
   private final ProjectCollection projects;
-  private final VersionFamilyCollection families;
   private final VersionCollection versions;
 
   @Autowired
-  private ProjectController(
-    final ProjectCollection projects,
-    final VersionFamilyCollection families,
-    final VersionCollection versions
-  ) {
+  private ProjectController(final ProjectCollection projects, final VersionCollection versions) {
     this.projects = projects;
-    this.families = families;
     this.versions = versions;
   }
 
@@ -83,9 +75,8 @@ public class ProjectController {
     final String projectName
   ) {
     final Project project = this.projects.findByName(projectName).orElseThrow(ProjectNotFound::new);
-    final List<VersionFamily> families = this.families.findAllByProject(project._id());
     final List<Version> versions = this.versions.findAllByProject(project._id());
-    return HTTP.cachedOk(ProjectResponse.from(project, families, versions), CACHE);
+    return HTTP.cachedOk(ProjectResponse.from(project, versions), CACHE);
   }
 
   @Schema
@@ -94,16 +85,13 @@ public class ProjectController {
     String project_id,
     @Schema(name = "project_name", example = "Paper")
     String project_name,
-    @Schema(name = "version_groups")
-    List<String> version_groups,
     @Schema(name = "versions")
     List<String> versions
   ) {
-    static ProjectResponse from(final Project project, final List<VersionFamily> families, final List<Version> versions) {
+    static ProjectResponse from(final Project project, final List<Version> versions) {
       return new ProjectResponse(
         project.name(),
         project.friendlyName(),
-        families.stream().sorted(VersionFamily.COMPARATOR).map(VersionFamily::name).toList(),
         versions.stream().sorted(Version.COMPARATOR).map(Version::name).toList()
       );
     }
