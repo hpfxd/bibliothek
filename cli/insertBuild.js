@@ -135,7 +135,8 @@ async function run() {
         $setOnInsert: {
           "project": project.value._id,
           "group": versionGroup.value._id,
-          "name": versionName
+          "name": versionName,
+          "time": new Date()
         }
       },
       {
@@ -144,12 +145,12 @@ async function run() {
         upsert: true
       }
     );
-    const oldBuild = await database.collection("builds").findOne({
+    const previousBuild = await database.collection("builds").findOne({
       "project": project.value._id,
       "version": version.value._id
     }, {sort: {_id: -1}});
     let changes = [];
-    const lastBuild = oldBuild && oldBuild.changes.length ? oldBuild.changes.slice(0, 1)[0].commit : "HEAD^1";
+    const lastBuild = previousBuild && previousBuild.changes.length ? previousBuild.changes.slice(0, 1)[0].commit : "HEAD^1";
     const commits = gitlog({
       repo: repositoryPath,
       fields: ["hash", "subject", "rawBody"],

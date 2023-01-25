@@ -23,14 +23,12 @@
  */
 package io.papermc.bibliothek.database.model;
 
-import io.papermc.bibliothek.util.BringOrderToChaos;
 import io.papermc.bibliothek.util.NameSource;
 import io.papermc.bibliothek.util.TimeSource;
 import java.time.Instant;
 import java.util.Comparator;
 import org.bson.types.ObjectId;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.Nullable;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -43,10 +41,10 @@ public record Version(
   ObjectId project,
   ObjectId group,
   String name,
-  @Nullable Instant time
+  Instant time
 ) implements NameSource, TimeSource {
   // NOTE: this pattern cannot contain any capturing groups
   @Language("RegExp")
-  public static final String PATTERN = "[0-9.]+-?(?:pre|SNAPSHOT)?(?:[0-9.]+)?";
-  public static final Comparator<Version> COMPARATOR = BringOrderToChaos.timeOrNameComparator();
+  public static final String PATTERN = "(?:latest|[0-9.]+-?(?:pre|SNAPSHOT)?(?:[0-9.]+)?)?";
+  public static final Comparator<Version> COMPARATOR = Comparator.comparing(TimeSource::time);
 }

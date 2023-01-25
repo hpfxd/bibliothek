@@ -24,8 +24,7 @@
 package io.papermc.bibliothek.util;
 
 import java.time.Instant;
-import org.jetbrains.annotations.UnknownNullability;
 
 public interface TimeSource {
-  @UnknownNullability Instant time();
+  Instant time();
 }

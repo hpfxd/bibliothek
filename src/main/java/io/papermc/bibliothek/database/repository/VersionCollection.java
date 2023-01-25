@@ -27,7 +27,9 @@ import io.papermc.bibliothek.database.model.Version;
 import java.util.List;
 import java.util.Optional;
 import org.bson.types.ObjectId;
+import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -37,4 +39,16 @@ public interface VersionCollection extends MongoRepository<Version, ObjectId> {
   List<Version> findAllByProjectAndGroup(final ObjectId project, final ObjectId group);
 
   Optional<Version> findByProjectAndName(final ObjectId project, final String name);
+
+  @Query("{project: { $eq: ?0 }}")
+  @Aggregation({"{ $sort: { time: -1 }}", "{ $limit: 1 }"})
+  Version findLatestVersion(final ObjectId project);
+
+  default Optional<Version> findCorrectVersion(final ObjectId project, final String name) {
+    if ("latest".equals(name)) {
+      // when project exists, it has to have at least one version
+      return Optional.of(findLatestVersion(project));
+    }
+    return findByProjectAndName(project, name);
+  }
 }

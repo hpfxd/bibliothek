@@ -28,7 +28,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.bson.types.ObjectId;
+import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -38,4 +40,8 @@ public interface BuildCollection extends MongoRepository<Build, ObjectId> {
   List<Build> findAllByProjectAndVersionIn(final ObjectId project, final Collection<ObjectId> version);
 
   Optional<Build> findByProjectAndVersionAndNumber(final ObjectId project, final ObjectId version, final int number);
+
+  @Query("{ project: { $eq: ?0 }, version: { $eq: ?1 }}")
+  @Aggregation({"{ $sort: { promoted: -1, number: -1 }}", "{ $limit: 1 }"})
+  Build findLatestBuild(final ObjectId project, final ObjectId version);
 }

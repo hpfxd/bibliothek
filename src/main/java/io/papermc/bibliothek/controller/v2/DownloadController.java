@@ -46,7 +46,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.Map;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.CacheControl;
@@ -63,7 +63,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(produces = MediaType.APPLICATION_JSON_VALUE)
 @SuppressWarnings("checkstyle:FinalClass")
 public class DownloadController {
-  private static final CacheControl CACHE = HTTP.sMaxAgePublicCache(Duration.ofDays(7));
+  private static final CacheControl CACHE_LATEST = HTTP.sMaxAgePublicCache(Duration.ofHours(2));
+  private static final CacheControl CACHE_SPECIFIC = HTTP.sMaxAgePublicCache(Duration.ofDays(7));
   private final AppConfiguration configuration;
   private final ProjectCollection projects;
   private final VersionCollection versions;
@@ -103,14 +104,65 @@ public class DownloadController {
     }
   )
   @GetMapping(
-    value = "/v2/projects/{project:[a-z]+}/versions/{version:" + Version.PATTERN + "}/builds/{build:\\d+}/downloads/{download:" + Build.Download.PATTERN + "}",
+    value = "/v2/projects/{project:[a-z]+}/versions/{version:" + Version.PATTERN + "}/builds/latest/downloads/{download:[a-z]+}",
     produces = {
       MediaType.APPLICATION_JSON_VALUE,
       HTTP.APPLICATION_JAVA_ARCHIVE_VALUE
     }
   )
   @Operation(summary = "Downloads the given file from a build's data.")
-  public ResponseEntity<?> download(
+  public ResponseEntity<?> downloadLatest(
+    @Parameter(name = "project", description = "The project identifier.", example = "paper")
+    @PathVariable("project")
+    @Pattern(regexp = "[a-z]+") //
+    final String projectName,
+    @Parameter(description = "A version of the project.")
+    @PathVariable("version")
+    @Pattern(regexp = Version.PATTERN) //
+    final String versionName,
+    @Parameter(description = "A download of the build.")
+    @PathVariable("download")
+    @Pattern(regexp = Build.Download.PATTERN) //
+    final String downloadName
+  ) {
+    final Project project = this.projects.findByName(projectName).orElseThrow(ProjectNotFound::new);
+    final Version version = this.versions.findCorrectVersion(project._id(), versionName).orElseThrow(VersionNotFound::new);
+
+    final Build latestBuild = this.builds.findLatestBuild(project._id(), version._id());
+    System.out.println(latestBuild._id());
+
+    return download(downloadName, project, version, latestBuild, CACHE_LATEST);
+  }
+
+  @ApiResponse(
+    responseCode = "200",
+    headers = {
+      @Header(
+        name = "Content-Disposition",
+        description = "A header indicating that the content is expected to be displayed as an attachment, that is downloaded and saved locally.",
+        schema = @Schema(type = "string")
+      ),
+      @Header(
+        name = "ETag",
+        description = "An identifier for a specific version of a resource. It lets caches be more efficient and save bandwidth, as a web server does not need to resend a full response if the content has not changed.",
+        schema = @Schema(type = "string")
+      ),
+      @Header(
+        name = "Last-Modified",
+        description = "The date and time at which the origin server believes the resource was last modified.",
+        schema = @Schema(type = "string")
+      )
+    }
+  )
+  @GetMapping(
+    value = "/v2/projects/{project:[a-z]+}/versions/{version:" + Version.PATTERN + "}/builds/{build:\\d+}/downloads/{download:[a-z]+}",
+    produces = {
+      MediaType.APPLICATION_JSON_VALUE,
+      HTTP.APPLICATION_JAVA_ARCHIVE_VALUE
+    }
+  )
+  @Operation(summary = "Downloads the given file from a build's data.")
+  public ResponseEntity<?> downloadSpecific(
     @Parameter(name = "project", description = "The project identifier.", example = "paper")
     @PathVariable("project")
     @Pattern(regexp = "[a-z]+") //
@@ -129,26 +181,31 @@ public class DownloadController {
     final String downloadName
   ) {
     final Project project = this.projects.findByName(projectName).orElseThrow(ProjectNotFound::new);
-    final Version version = this.versions.findByProjectAndName(project._id(), versionName).orElseThrow(VersionNotFound::new);
+    final Version version = this.versions.findCorrectVersion(project._id(), versionName).orElseThrow(VersionNotFound::new);
     final Build build = this.builds.findByProjectAndVersionAndNumber(project._id(), version._id(), buildNumber).orElseThrow(BuildNotFound::new);
 
-    for (final Map.Entry<String, Build.Download> download : build.downloads().entrySet()) {
-      if (download.getValue().name().equals(downloadName)) {
-        try {
-          return new JavaArchive(
-            this.configuration.getStoragePath()
-              .resolve(project.name())
-              .resolve(version.name())
-              .resolve(String.valueOf(build.number()))
-              .resolve(download.getValue().name()),
-            CACHE
-          );
-        } catch (final IOException e) {
-          throw new DownloadFailed(e);
-        }
-      }
+    return download(downloadName, project, version, build, CACHE_SPECIFIC);
+  }
+
+  @NotNull
+  private JavaArchive download(String downloadName, Project project, Version version, Build build, CacheControl cache) {
+    Build.Download download = build.downloads().get(downloadName);
+    if (download == null) {
+      throw new DownloadNotFound();
     }
-    throw new DownloadNotFound();
+
+    try {
+      return new JavaArchive(
+        this.configuration.getStoragePath()
+          .resolve(project.name())
+          .resolve(version.name())
+          .resolve(String.valueOf(build.number()))
+          .resolve(download.name()),
+        cache
+      );
+    } catch (final IOException e) {
+      throw new DownloadFailed(e);
+    }
   }
 
   private static class JavaArchive extends ResponseEntity<FileSystemResource> {

@@ -78,9 +78,33 @@ public class VersionBuildController {
     ),
     responseCode = "200"
   )
+  @GetMapping("/v2/projects/{project:[a-z]+}/versions/{version:" + Version.PATTERN + "}/builds/latest")
+  @Operation(summary = "Gets information related to a specific build.")
+  public ResponseEntity<?> buildLatest(
+    @Parameter(name = "project", description = "The project identifier.", example = "paper")
+    @PathVariable("project")
+    @Pattern(regexp = "[a-z]+") //
+    final String projectName,
+    @Parameter(description = "A version of the project.")
+    @PathVariable("version")
+    @Pattern(regexp = Version.PATTERN) //
+    final String versionName
+  ) {
+    final Project project = this.projects.findByName(projectName).orElseThrow(ProjectNotFound::new);
+    final Version version = this.versions.findCorrectVersion(project._id(), versionName).orElseThrow(VersionNotFound::new);
+    final Build build = this.builds.findLatestBuild(project._id(), version._id());
+    return HTTP.cachedOk(BuildResponse.from(project, version, build), CACHE);
+  }
+
+  @ApiResponse(
+    content = @Content(
+      schema = @Schema(implementation = BuildResponse.class)
+    ),
+    responseCode = "200"
+  )
   @GetMapping("/v2/projects/{project:[a-z]+}/versions/{version:" + Version.PATTERN + "}/builds/{build:\\d+}")
   @Operation(summary = "Gets information related to a specific build.")
-  public ResponseEntity<?> build(
+  public ResponseEntity<?> buildSpecific(
     @Parameter(name = "project", description = "The project identifier.", example = "paper")
     @PathVariable("project")
     @Pattern(regexp = "[a-z]+") //
@@ -95,7 +119,8 @@ public class VersionBuildController {
     final int buildNumber
   ) {
     final Project project = this.projects.findByName(projectName).orElseThrow(ProjectNotFound::new);
-    final Version version = this.versions.findByProjectAndName(project._id(), versionName).orElseThrow(VersionNotFound::new);
+    // it makes no sense to request version 'latest' in this endpoint, but I don't see a reason to deny it either
+    final Version version = this.versions.findCorrectVersion(project._id(), versionName).orElseThrow(VersionNotFound::new);
     final Build build = this.builds.findByProjectAndVersionAndNumber(project._id(), version._id(), buildNumber).orElseThrow(BuildNotFound::new);
     return HTTP.cachedOk(BuildResponse.from(project, version, build), CACHE);
   }
