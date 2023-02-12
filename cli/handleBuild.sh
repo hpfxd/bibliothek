@@ -8,21 +8,23 @@ VERSION=$2
 BUILD=$3
 COMMIT=$4
 
+# Setup some variables
+PROJECT_NAME=${PROJECT^}
+VERSION_GROUP=${VERSION%.*}
+REPO_URL=$REPO$PROJECT_NAME
+
 echo "Project: $PROJECT"
 echo "Version: $VERSION"
 echo "Build: $BUILD"
 echo "Commit: $COMMIT"
+echo "Repo: $REPO_URL"
 echo
 
 # Load the .env file
 export $(cat .env | xargs)
 
-# Setup some variables
-PROJECT_NAME=${PROJECT^}
-VERSION_GROUP=${VERSION%.*}
-
 # Clone the current commit of Geyser and checkout the commit we want to insert
-git clone -n $REPO ./repo
+git clone -n $REPO_URL ./repo
 git -C ./repo checkout $COMMIT
 
 DOWNLOADS=""
