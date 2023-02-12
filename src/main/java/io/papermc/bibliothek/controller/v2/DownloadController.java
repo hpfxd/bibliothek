@@ -46,6 +46,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Map;
+import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
@@ -104,7 +106,7 @@ public class DownloadController {
     }
   )
   @GetMapping(
-    value = "/v2/projects/{project:[a-z]+}/versions/{version:" + Version.PATTERN + "}/builds/latest/downloads/{download:[a-z]+}",
+    value = "/v2/projects/{project:[a-z]+}/versions/{version:" + Version.PATTERN + "}/builds/latest/downloads/{download:" + Build.Download.PATTERN + "}",
     produces = {
       MediaType.APPLICATION_JSON_VALUE,
       HTTP.APPLICATION_JAVA_ARCHIVE_VALUE
@@ -129,7 +131,6 @@ public class DownloadController {
     final Version version = this.versions.findCorrectVersion(project._id(), versionName).orElseThrow(VersionNotFound::new);
 
     final Build latestBuild = this.builds.findLatestBuild(project._id(), version._id());
-    System.out.println(latestBuild._id());
 
     return download(downloadName, project, version, latestBuild, CACHE_LATEST);
   }
@@ -155,7 +156,7 @@ public class DownloadController {
     }
   )
   @GetMapping(
-    value = "/v2/projects/{project:[a-z]+}/versions/{version:" + Version.PATTERN + "}/builds/{build:\\d+}/downloads/{download:[a-z]+}",
+    value = "/v2/projects/{project:[a-z]+}/versions/{version:" + Version.PATTERN + "}/builds/{build:\\d+}/downloads/{download:" + Build.Download.PATTERN + "}",
     produces = {
       MediaType.APPLICATION_JSON_VALUE,
       HTTP.APPLICATION_JAVA_ARCHIVE_VALUE
@@ -190,6 +191,15 @@ public class DownloadController {
   @NotNull
   private JavaArchive download(String downloadName, Project project, Version version, Build build, CacheControl cache) {
     Build.Download download = build.downloads().get(downloadName);
+
+    // Fallback to file name based downloads
+    if (download == null) {
+      Optional<Map.Entry<String, Build.Download>> potentialDownload = build.downloads().entrySet().stream().filter(buildDownload -> buildDownload.getValue().name().equals(downloadName)).findFirst();
+      if (potentialDownload.isPresent()) {
+        download = potentialDownload.get().getValue();
+      }
+    }
+
     if (download == null) {
       throw new DownloadNotFound();
     }
