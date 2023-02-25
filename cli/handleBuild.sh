@@ -50,7 +50,7 @@ for F in ./files/*.jar; do
 done
 
 # Launch a docker container that can see the mongo database and run the insertBuild.js script
-docker run --rm --network="$NETWORK" -e MONGODB_URL=$MONGODB_URL -v $(pwd):/app -v $(pwd)/repo:/repo -v $STORAGE_DIR:/storage node:lts node /app/insertBuild.js \
+docker run --rm --network="$NETWORK" -e MONGODB_URL=$MONGODB_URL -v $(pwd):/app -v $(pwd)/repo:/repo -v $STORAGE_DIR:/storage -v $(pwd)/.gitconfig:/root/.gitconfig node:lts node /app/insertBuild.js \
 	--projectName=$PROJECT \
 	--projectFriendlyName=$PROJECT_NAME \
 	--versionGroupName=$VERSION_GROUP \
