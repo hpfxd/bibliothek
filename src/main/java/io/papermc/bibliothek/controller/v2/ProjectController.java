@@ -69,7 +69,7 @@ public class ProjectController {
   @GetMapping("/v2/projects/{project:[a-z]+}")
   @Operation(summary = "Gets information about a project.")
   public ResponseEntity<?> project(
-    @Parameter(name = "project", description = "The project identifier.", example = "paper")
+    @Parameter(name = "project", description = "The project identifier.", example = "geyser")
     @PathVariable("project")
     @Pattern(regexp = "[a-z]+") //
     final String projectName
@@ -81,9 +81,9 @@ public class ProjectController {
 
   @Schema
   private record ProjectResponse(
-    @Schema(name = "project_id", pattern = "[a-z]+", example = "paper")
+    @Schema(name = "project_id", pattern = "[a-z]+", example = "geyser")
     String project_id,
-    @Schema(name = "project_name", example = "Paper")
+    @Schema(name = "project_name", example = "Geyser")
     String project_name,
     @Schema(name = "versions")
     List<String> versions

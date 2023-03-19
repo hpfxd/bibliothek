@@ -78,7 +78,7 @@ public class VersionController {
   @GetMapping("/v2/projects/{project:[a-z]+}/versions/{version:" + Version.PATTERN + "}")
   @Operation(summary = "Gets information about a version.")
   public ResponseEntity<?> version(
-    @Parameter(name = "project", description = "The project identifier.", example = "paper")
+    @Parameter(name = "project", description = "The project identifier.", example = "geyser")
     @PathVariable("project")
     @Pattern(regexp = "[a-z]+") //
     final String projectName,
@@ -95,11 +95,11 @@ public class VersionController {
 
   @Schema
   private record VersionResponse(
-    @Schema(name = "project_id", pattern = "[a-z]+", example = "paper")
+    @Schema(name = "project_id", pattern = "[a-z]+", example = "geyser")
     String project_id,
-    @Schema(name = "project_name", example = "Paper")
+    @Schema(name = "project_name", example = "Geyser")
     String project_name,
-    @Schema(name = "version", pattern = Version.PATTERN, example = "1.18")
+    @Schema(name = "version", pattern = Version.PATTERN, example = "2.1.0")
     String version,
     @Schema(name = "builds")
     List<Integer> builds
