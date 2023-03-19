@@ -41,6 +41,6 @@ public interface BuildCollection extends MongoRepository<Build, ObjectId> {
 
   Optional<Build> findByProjectAndVersionAndNumber(final ObjectId project, final ObjectId version, final int number);
 
-  @Aggregation({"{ $match : { project: ?0 }}", "{ $sort: { promoted: -1, number: -1 }}", "{ $limit: 1 }"})
+  @Aggregation({"{ $match : { project: ?0, version: ?1 }}", "{ $sort: { promoted: -1, number: -1 }}", "{ $limit: 1 }"})
   Build findLatestBuild(final ObjectId project, final ObjectId version);
 }
