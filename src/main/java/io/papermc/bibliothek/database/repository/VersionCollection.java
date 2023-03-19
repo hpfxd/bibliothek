@@ -40,8 +40,7 @@ public interface VersionCollection extends MongoRepository<Version, ObjectId> {
 
   Optional<Version> findByProjectAndName(final ObjectId project, final String name);
 
-  @Query("{project: { $eq: ?0 }}")
-  @Aggregation({"{ $sort: { time: -1 }}", "{ $limit: 1 }"})
+  @Aggregation({"{ $match : { project: ?0 }}", "{ $sort: { time: -1 }}", "{ $limit: 1 }"})
   Version findLatestVersion(final ObjectId project);
 
   default Optional<Version> findCorrectVersion(final ObjectId project, final String name) {
