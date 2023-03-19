@@ -33,6 +33,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class RootController {
   @GetMapping({
     "/",
+  })
+  public ResponseEntity<?> redirectToDownload() {
+    return ResponseEntity.status(HttpStatus.FOUND)
+      .location(URI.create("https://geysermc.org/download"))
+      .build();
+  }
+
+  @GetMapping({
     "/docs" // without trailing /
   })
   public ResponseEntity<?> redirectToDocs() {
