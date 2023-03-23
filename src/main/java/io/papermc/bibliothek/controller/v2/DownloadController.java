@@ -46,7 +46,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.CacheControl;
@@ -63,8 +62,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(produces = MediaType.APPLICATION_JSON_VALUE)
 @SuppressWarnings("checkstyle:FinalClass")
 public class DownloadController {
-  private static final CacheControl CACHE_LATEST = HTTP.sMaxAgePublicCache(Duration.ofHours(2));
-  private static final CacheControl CACHE_SPECIFIC = HTTP.sMaxAgePublicCache(Duration.ofDays(7));
+  private static final CacheControl CACHE_LATEST = HTTP.sMaxAgePublicCache(Duration.ofMinutes(1));
+  private static final CacheControl CACHE_SPECIFIC = HTTP.sMaxAgePublicCache(Duration.ofDays(14));
   private final AppConfiguration configuration;
   private final ProjectCollection projects;
   private final VersionCollection versions;
@@ -83,32 +82,9 @@ public class DownloadController {
     this.builds = builds;
   }
 
-  @ApiResponse(
-    responseCode = "200",
-    headers = {
-      @Header(
-        name = "Content-Disposition",
-        description = "A header indicating that the content is expected to be displayed as an attachment, that is downloaded and saved locally.",
-        schema = @Schema(type = "string")
-      ),
-      @Header(
-        name = "ETag",
-        description = "An identifier for a specific version of a resource. It lets caches be more efficient and save bandwidth, as a web server does not need to resend a full response if the content has not changed.",
-        schema = @Schema(type = "string")
-      ),
-      @Header(
-        name = "Last-Modified",
-        description = "The date and time at which the origin server believes the resource was last modified.",
-        schema = @Schema(type = "string")
-      )
-    }
-  )
+  @ApiResponse(responseCode = "302")
   @GetMapping(
-    value = "/v2/projects/{project:[a-z]+}/versions/{version:" + Version.PATTERN + "}/builds/latest/downloads/{download:[a-z]+}",
-    produces = {
-      MediaType.APPLICATION_JSON_VALUE,
-      HTTP.APPLICATION_JAVA_ARCHIVE_VALUE
-    }
+    value = "/v2/projects/{project:[a-z]+}/versions/{version:" + Version.PATTERN + "}/builds/latest/downloads/{download:[a-z]+}"
   )
   @Operation(summary = "Downloads the given file from a build's data.")
   public ResponseEntity<?> downloadLatest(
@@ -127,10 +103,16 @@ public class DownloadController {
   ) {
     final Project project = this.projects.findByName(projectName).orElseThrow(ProjectNotFound::new);
     final Version version = this.versions.findCorrectVersion(project._id(), versionName).orElseThrow(VersionNotFound::new);
+    final Build build = this.builds.findLatestBuild(project._id(), version._id());
 
-    final Build latestBuild = this.builds.findLatestBuild(project._id(), version._id());
+    if (!build.downloads().containsKey(downloadName)) {
+      throw new DownloadNotFound();
+    }
 
-    return download(downloadName, project, version, latestBuild, CACHE_LATEST);
+    return HTTP.cachedFound(
+      "/v2/projects/%s/versions/%s/builds/%s/downloads/%s".formatted(project.name(), version.name(), build.number(), downloadName),
+      CACHE_LATEST
+    );
   }
 
   @ApiResponse(
@@ -183,14 +165,16 @@ public class DownloadController {
     final Version version = this.versions.findCorrectVersion(project._id(), versionName).orElseThrow(VersionNotFound::new);
     final Build build = this.builds.findByProjectAndVersionAndNumber(project._id(), version._id(), buildNumber).orElseThrow(BuildNotFound::new);
 
-    return download(downloadName, project, version, build, CACHE_SPECIFIC);
-  }
-
-  @NotNull
-  private JavaArchive download(String downloadName, Project project, Version version, Build build, CacheControl cache) {
     Build.Download download = build.downloads().get(downloadName);
     if (download == null) {
       throw new DownloadNotFound();
+    }
+
+    if ("latest".equals(versionName)) {
+      return HTTP.cachedFound(
+        "/v2/projects/%s/versions/%s/builds/%s/downloads/%s".formatted(project.name(), version.name(), build.number(), downloadName),
+        CACHE_LATEST
+      );
     }
 
     try {
@@ -200,7 +184,7 @@ public class DownloadController {
           .resolve(version.name())
           .resolve(String.valueOf(build.number()))
           .resolve(download.name()),
-        cache
+        CACHE_SPECIFIC
       );
     } catch (final IOException e) {
       throw new DownloadFailed(e);

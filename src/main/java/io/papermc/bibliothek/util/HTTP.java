@@ -28,6 +28,8 @@ import java.nio.file.Path;
 import java.time.Duration;
 import org.springframework.http.CacheControl;
 import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
@@ -40,6 +42,14 @@ public final class HTTP {
 
   public static <T> ResponseEntity<T> cachedOk(final T response, final CacheControl cache) {
     return ResponseEntity.ok().cacheControl(cache).body(response);
+  }
+
+  public static ResponseEntity<?> cachedFound(final String mapping, final CacheControl cache) {
+    return ResponseEntity
+      .status(HttpStatus.FOUND)
+      .header(HttpHeaders.LOCATION, mapping)
+      .cacheControl(cache)
+      .build();
   }
 
   public static CacheControl sMaxAgePublicCache(final Duration sMaxAge) {

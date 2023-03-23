@@ -56,7 +56,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(produces = MediaType.APPLICATION_JSON_VALUE)
 @SuppressWarnings("checkstyle:FinalClass")
 public class VersionBuildController {
-  private static final CacheControl CACHE = HTTP.sMaxAgePublicCache(Duration.ofDays(7));
+  private static final CacheControl CACHE_LATEST = HTTP.sMaxAgePublicCache(Duration.ofMinutes(1));
+  private static final CacheControl CACHE_SPECIFIC = HTTP.sMaxAgePublicCache(Duration.ofDays(7));
   private final ProjectCollection projects;
   private final VersionCollection versions;
   private final BuildCollection builds;
@@ -72,12 +73,7 @@ public class VersionBuildController {
     this.builds = builds;
   }
 
-  @ApiResponse(
-    content = @Content(
-      schema = @Schema(implementation = BuildResponse.class)
-    ),
-    responseCode = "200"
-  )
+  @ApiResponse(responseCode = "302")
   @GetMapping("/v2/projects/{project:[a-z]+}/versions/{version:" + Version.PATTERN + "}/builds/latest")
   @Operation(summary = "Gets information related to a specific build.")
   public ResponseEntity<?> buildLatest(
@@ -93,7 +89,11 @@ public class VersionBuildController {
     final Project project = this.projects.findByName(projectName).orElseThrow(ProjectNotFound::new);
     final Version version = this.versions.findCorrectVersion(project._id(), versionName).orElseThrow(VersionNotFound::new);
     final Build build = this.builds.findLatestBuild(project._id(), version._id());
-    return HTTP.cachedOk(BuildResponse.from(project, version, build), CACHE);
+
+    return HTTP.cachedFound(
+      "/v2/projects/%s/versions/%s/builds/%s".formatted(project.name(), version.name(), build.number()),
+      CACHE_LATEST
+    );
   }
 
   @ApiResponse(
@@ -122,7 +122,15 @@ public class VersionBuildController {
     // it makes no sense to request version 'latest' in this endpoint, but I don't see a reason to deny it either
     final Version version = this.versions.findCorrectVersion(project._id(), versionName).orElseThrow(VersionNotFound::new);
     final Build build = this.builds.findByProjectAndVersionAndNumber(project._id(), version._id(), buildNumber).orElseThrow(BuildNotFound::new);
-    return HTTP.cachedOk(BuildResponse.from(project, version, build), CACHE);
+
+    if ("latest".equals(versionName)) {
+      return HTTP.cachedFound(
+        "/v2/projects/%s/versions/%s/builds/%s".formatted(project.name(), version.name(), build.number()),
+        CACHE_LATEST
+      );
+    }
+
+    return HTTP.cachedOk(BuildResponse.from(project, version, build), CACHE_SPECIFIC);
   }
 
   @Schema

@@ -91,6 +91,14 @@ public class VersionBuildsController {
   ) {
     final Project project = this.projects.findByName(projectName).orElseThrow(ProjectNotFound::new);
     final Version version = this.versions.findCorrectVersion(project._id(), versionName).orElseThrow(VersionNotFound::new);
+
+    if ("latest".equals(versionName)) {
+      return HTTP.cachedFound(
+        "/v2/projects/%s/versions/%s/builds".formatted(project.name(), version.name()),
+        CACHE
+      );
+    }
+
     final List<Build> builds = this.builds.findAllByProjectAndVersion(project._id(), version._id());
     return HTTP.cachedOk(BuildsResponse.from(project, version, builds), CACHE);
   }
