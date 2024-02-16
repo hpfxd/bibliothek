@@ -35,6 +35,7 @@ import io.papermc.bibliothek.exception.DownloadFailed;
 import io.papermc.bibliothek.exception.DownloadNotFound;
 import io.papermc.bibliothek.exception.ProjectNotFound;
 import io.papermc.bibliothek.exception.VersionNotFound;
+import io.papermc.bibliothek.util.CustomFileNameMap;
 import io.papermc.bibliothek.util.HTTP;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -53,6 +54,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.MimeTypeUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -64,6 +66,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class DownloadController {
   private static final CacheControl CACHE_LATEST = HTTP.sMaxAgePublicCache(Duration.ofMinutes(1));
   private static final CacheControl CACHE_SPECIFIC = HTTP.sMaxAgePublicCache(Duration.ofDays(14));
+  private static final CustomFileNameMap FILE_NAME_MAP = new CustomFileNameMap();
   private final AppConfiguration configuration;
   private final ProjectCollection projects;
   private final VersionCollection versions;
@@ -139,7 +142,7 @@ public class DownloadController {
     value = "/v2/projects/{project:[a-z]+}/versions/{version:" + Version.PATTERN + "}/builds/{build:\\d+}/downloads/{download:[a-z]+}",
     produces = {
       MediaType.APPLICATION_JSON_VALUE,
-      HTTP.APPLICATION_JAVA_ARCHIVE_VALUE
+      MimeTypeUtils.ALL_VALUE
     }
   )
   @Operation(summary = "Downloads the given file from a build's data.")
@@ -178,7 +181,7 @@ public class DownloadController {
     }
 
     try {
-      return new JavaArchive(
+      return new DownloadFile(
         this.configuration.getStoragePath()
           .resolve(project.name())
           .resolve(version.name())
@@ -191,8 +194,8 @@ public class DownloadController {
     }
   }
 
-  private static class JavaArchive extends ResponseEntity<FileSystemResource> {
-    JavaArchive(final Path path, final CacheControl cache) throws IOException {
+  private static class DownloadFile extends ResponseEntity<FileSystemResource> {
+    DownloadFile(final Path path, final CacheControl cache) throws IOException {
       super(new FileSystemResource(path), headersFor(path, cache), HttpStatus.OK);
     }
 
@@ -200,7 +203,7 @@ public class DownloadController {
       final HttpHeaders headers = new HttpHeaders();
       headers.setCacheControl(cache);
       headers.setContentDisposition(HTTP.attachmentDisposition(path.getFileName()));
-      headers.setContentType(HTTP.APPLICATION_JAVA_ARCHIVE);
+      headers.setContentType(MediaType.valueOf(FILE_NAME_MAP.getContentTypeFor(path.getFileName().toString())));
       headers.setLastModified(Files.getLastModifiedTime(path).toInstant());
       return headers;
     }

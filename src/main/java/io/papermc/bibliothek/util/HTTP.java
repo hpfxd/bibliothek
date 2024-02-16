@@ -34,9 +34,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 public final class HTTP {
-  public static final String APPLICATION_JAVA_ARCHIVE_VALUE = "application/java-archive";
-  public static final MediaType APPLICATION_JAVA_ARCHIVE = new MediaType("application", "java-archive");
-
   private HTTP() {
   }
 
