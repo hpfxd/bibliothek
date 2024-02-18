@@ -35,8 +35,8 @@ import io.papermc.bibliothek.exception.DownloadFailed;
 import io.papermc.bibliothek.exception.DownloadNotFound;
 import io.papermc.bibliothek.exception.ProjectNotFound;
 import io.papermc.bibliothek.exception.VersionNotFound;
-import io.papermc.bibliothek.util.CustomFileNameMap;
 import io.papermc.bibliothek.util.HTTP;
+import io.papermc.bibliothek.util.MediaTypeMap;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.headers.Header;
@@ -66,7 +66,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class DownloadController {
   private static final CacheControl CACHE_LATEST = HTTP.sMaxAgePublicCache(Duration.ofMinutes(1));
   private static final CacheControl CACHE_SPECIFIC = HTTP.sMaxAgePublicCache(Duration.ofDays(14));
-  private static final CustomFileNameMap FILE_NAME_MAP = new CustomFileNameMap();
+  private static final MediaTypeMap FILE_NAME_MAP = new MediaTypeMap();
   private final AppConfiguration configuration;
   private final ProjectCollection projects;
   private final VersionCollection versions;
@@ -203,7 +203,7 @@ public class DownloadController {
       final HttpHeaders headers = new HttpHeaders();
       headers.setCacheControl(cache);
       headers.setContentDisposition(HTTP.attachmentDisposition(path.getFileName()));
-      headers.setContentType(MediaType.valueOf(FILE_NAME_MAP.getContentTypeFor(path.getFileName().toString())));
+      headers.setContentType(FILE_NAME_MAP.mediaTypeFor(path.getFileName().toString()));
       headers.setLastModified(Files.getLastModifiedTime(path).toInstant());
       return headers;
     }

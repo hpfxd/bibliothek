@@ -1,7 +1,7 @@
 /*
  * This file is part of bibliothek, licensed under the MIT License.
  *
- * Copyright (c) 2024 GeyserMC
+ * Copyright (c) 2019-2023 PaperMC
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,24 +23,24 @@
  */
 package io.papermc.bibliothek.util;
 
-import java.net.FileNameMap;
-import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.http.MediaType;
+import org.springframework.http.MediaTypeFactory;
 
-public class CustomFileNameMap implements FileNameMap {
-  private final FileNameMap internalMap = URLConnection.getFileNameMap();
+public class MediaTypeMap {
+  private final Map<String, MediaType> customMap = new HashMap<>() {
+    {
+      put("mcpack", MediaType.parseMediaType("application/zip"));
+    }
+  };
 
-  private final Map<String, String> customMap = new HashMap<>() {{
-    put("mcpack", "application/zip");
-  }};
-
-  public String getContentTypeFor(String fileName) {
-    return customMap.getOrDefault(getExtension(fileName), internalMap.getContentTypeFor(fileName));
+  public MediaType mediaTypeFor(final String fileName) {
+    return this.customMap.getOrDefault(this.fileExtension(fileName), MediaTypeFactory.getMediaType(fileName).orElse(MediaType.APPLICATION_OCTET_STREAM));
   }
 
-  private String getExtension(String fileName) {
-    int index = fileName.lastIndexOf('.');
+  private String fileExtension(final String fileName) {
+    final int index = fileName.lastIndexOf('.');
     if (index == -1) {
       return "";
     }
