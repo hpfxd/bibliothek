@@ -168,7 +168,7 @@ public class DownloadController {
     final Version version = this.versions.findCorrectVersion(project._id(), versionName).orElseThrow(VersionNotFound::new);
     final Build build = this.builds.findByProjectAndVersionAndNumber(project._id(), version._id(), buildNumber).orElseThrow(BuildNotFound::new);
 
-    Build.Download download = build.downloads().get(downloadName);
+    final Build.Download download = build.downloads().get(downloadName);
     if (download == null) {
       throw new DownloadNotFound();
     }

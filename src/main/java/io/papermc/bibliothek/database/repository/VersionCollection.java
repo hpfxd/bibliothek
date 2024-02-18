@@ -29,7 +29,6 @@ import java.util.Optional;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -46,8 +45,8 @@ public interface VersionCollection extends MongoRepository<Version, ObjectId> {
   default Optional<Version> findCorrectVersion(final ObjectId project, final String name) {
     if ("latest".equals(name)) {
       // when project exists, it has to have at least one version
-      return Optional.of(findLatestVersion(project));
+      return Optional.of(this.findLatestVersion(project));
     }
-    return findByProjectAndName(project, name);
+    return this.findByProjectAndName(project, name);
   }
 }
