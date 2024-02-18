@@ -47,6 +47,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import jakarta.validation.constraints.Positive;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.CacheControl;
@@ -157,7 +158,7 @@ public class DownloadController {
     final String versionName,
     @Parameter(description = "A build of the version.")
     @PathVariable("build")
-    @Pattern(regexp = "\\d+") //
+    @Positive //
     final int buildNumber,
     @Parameter(description = "A download of the build.")
     @PathVariable("download")
