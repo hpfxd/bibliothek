@@ -1,7 +1,7 @@
 /*
  * This file is part of bibliothek, licensed under the MIT License.
  *
- * Copyright (c) 2019-2023 PaperMC
+ * Copyright (c) 2019-2024 PaperMC
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +34,7 @@ import org.springframework.validation.annotation.Validated;
 public class AppConfiguration {
   private URL apiBaseUrl;
   private String apiTitle;
+  private String apiVersion;
   private @NotNull Path storagePath;
 
   @SuppressWarnings("checkstyle:MethodName")
@@ -54,6 +55,16 @@ public class AppConfiguration {
   @SuppressWarnings("checkstyle:MethodName")
   public void setApiTitle(final String apiTitle) {
     this.apiTitle = apiTitle;
+  }
+
+  @SuppressWarnings("checkstyle:MethodName")
+  public String getApiVersion() {
+    return this.apiVersion;
+  }
+
+  @SuppressWarnings("checkstyle:MethodName")
+  public void setApiVersion(final String apiVersion) {
+    this.apiVersion = apiVersion;
   }
 
   @SuppressWarnings("checkstyle:MethodName")
