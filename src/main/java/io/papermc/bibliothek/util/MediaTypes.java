@@ -23,27 +23,30 @@
  */
 package io.papermc.bibliothek.util;
 
-import java.util.HashMap;
-import java.util.Map;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.http.MediaType;
 import org.springframework.http.MediaTypeFactory;
 
-public class MediaTypeMap {
-  private final Map<String, MediaType> customMap = new HashMap<>() {
-    {
-      put("mcpack", MediaType.parseMediaType("application/zip"));
-    }
-  };
+public final class MediaTypes {
 
-  public MediaType mediaTypeFor(final String fileName) {
-    return this.customMap.getOrDefault(this.fileExtension(fileName), MediaTypeFactory.getMediaType(fileName).orElse(MediaType.APPLICATION_OCTET_STREAM));
+  public static final String APPLICATION_ZIP_VALUE = "application/zip";
+  public static final MediaType APPLICATION_ZIP = MediaType.parseMediaType(APPLICATION_ZIP_VALUE);
+
+  private MediaTypes() {
   }
 
-  private String fileExtension(final String fileName) {
-    final int index = fileName.lastIndexOf('.');
-    if (index == -1) {
-      return "";
+  public static @Nullable MediaType fromFileName(final String name) {
+    final int index = name.lastIndexOf('.');
+    if (index != -1) {
+      return fromFileExtension(name.substring(index + 1));
     }
-    return fileName.substring(index + 1);
+    return null;
+  }
+
+  public static @Nullable MediaType fromFileExtension(final String extension) {
+    return switch (extension) {
+      case "mcpack" -> APPLICATION_ZIP;
+      default -> MediaTypeFactory.getMediaType("." + extension).orElse(MediaType.APPLICATION_OCTET_STREAM);
+    };
   }
 }
