@@ -43,6 +43,6 @@ public record Version(
 ) {
   // NOTE: this pattern cannot contain any capturing groups
   @Language("RegExp")
-  public static final String PATTERN = "(?:latest|[0-9.]+-?(?:pre|SNAPSHOT)?(?:[0-9.]+)?)?";
+  public static final String PATTERN = "(?:latest|(pr)?[0-9.]+-?(?:pre|SNAPSHOT)?(?:[0-9.]+)?)?";
   public static final Comparator<Version> COMPARATOR = Comparator.comparing(Version::time);
 }
