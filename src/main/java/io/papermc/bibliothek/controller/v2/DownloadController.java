@@ -90,7 +90,7 @@ public class DownloadController {
   )
   @Operation(summary = "Downloads the given file from a build's data.")
   public ResponseEntity<?> downloadLatest(
-    @Parameter(name = "project", description = "The project identifier.", example = "geyser")
+    @Parameter(name = "project", description = "The project identifier.", example = "pandaspigot")
     @PathVariable("project")
     @Pattern(regexp = "[a-z]+") //
     final String projectName,
@@ -146,7 +146,7 @@ public class DownloadController {
   )
   @Operation(summary = "Downloads the given file from a build's data.")
   public ResponseEntity<?> downloadSpecific(
-    @Parameter(name = "project", description = "The project identifier.", example = "geyser")
+    @Parameter(name = "project", description = "The project identifier.", example = "pandaspigot")
     @PathVariable("project")
     @Pattern(regexp = "[a-z]+") //
     final String projectName,

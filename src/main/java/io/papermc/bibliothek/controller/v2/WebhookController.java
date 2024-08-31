@@ -88,7 +88,7 @@ public class WebhookController {
     produces = MediaType.APPLICATION_JSON_VALUE
   )
   public ResponseEntity<?> createBuild(
-    @Parameter(name = "project", description = "The project identifier.", example = "geyser")
+    @Parameter(name = "project", description = "The project identifier.", example = "pandaspigot")
     @PathVariable("project")
     @Pattern(regexp = "[a-z]+") final String projectName,
     @Parameter(name = "version", description = "A version of the project.")

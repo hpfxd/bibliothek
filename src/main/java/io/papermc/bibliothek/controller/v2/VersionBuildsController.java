@@ -80,7 +80,7 @@ public class VersionBuildsController {
   @GetMapping("/v2/projects/{project:[a-z]+}/versions/{version:" + Version.PATTERN + "}/builds")
   @Operation(summary = "Gets all available builds for a project's version.")
   public ResponseEntity<?> builds(
-    @Parameter(name = "project", description = "The project identifier.", example = "geyser")
+    @Parameter(name = "project", description = "The project identifier.", example = "pandaspigot")
     @PathVariable("project")
     @Pattern(regexp = "[a-z]+") //
     final String projectName,
@@ -105,11 +105,11 @@ public class VersionBuildsController {
 
   @Schema
   private record BuildsResponse(
-    @Schema(name = "project_id", pattern = "[a-z]+", example = "geyser")
+    @Schema(name = "project_id", pattern = "[a-z]+", example = "pandaspigot")
     String project_id,
-    @Schema(name = "project_name", example = "Geyser")
+    @Schema(name = "project_name", example = "PandaSpigot")
     String project_name,
-    @Schema(name = "version", pattern = Version.PATTERN, example = "2.1.0")
+    @Schema(name = "version", pattern = Version.PATTERN, example = "1.8.8")
     String version,
     @Schema(name = "builds")
     List<VersionBuild> builds

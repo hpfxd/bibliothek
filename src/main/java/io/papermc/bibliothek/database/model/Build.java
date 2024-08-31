@@ -81,7 +81,7 @@ public record Build(
 
   @Schema
   public record Download(
-    @Schema(name = "name", pattern = "[a-z0-9._-]+", example = "Geyser-Spigot.jar")
+    @Schema(name = "name", pattern = "[a-z0-9._-]+", example = "pandaspigot-1.jar")
     String name,
     @Schema(name = "sha256", pattern = "[a-f0-9]{64}", example = "9ecc7374c2110a077f6c288fa4ad53a6812c09d5690dae0bc96508f939d4cb8a")
     String sha256

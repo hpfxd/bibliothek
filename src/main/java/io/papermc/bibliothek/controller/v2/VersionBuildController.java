@@ -78,7 +78,7 @@ public class VersionBuildController {
   @GetMapping("/v2/projects/{project:[a-z]+}/versions/{version:" + Version.PATTERN + "}/builds/latest")
   @Operation(summary = "Gets information related to a specific build.")
   public ResponseEntity<?> buildLatest(
-    @Parameter(name = "project", description = "The project identifier.", example = "geyser")
+    @Parameter(name = "project", description = "The project identifier.", example = "pandaspigot")
     @PathVariable("project")
     @Pattern(regexp = "[a-z]+") //
     final String projectName,
@@ -106,7 +106,7 @@ public class VersionBuildController {
   @GetMapping("/v2/projects/{project:[a-z]+}/versions/{version:" + Version.PATTERN + "}/builds/{build:\\d+}")
   @Operation(summary = "Gets information related to a specific build.")
   public ResponseEntity<?> buildSpecific(
-    @Parameter(name = "project", description = "The project identifier.", example = "geyser")
+    @Parameter(name = "project", description = "The project identifier.", example = "pandaspigot")
     @PathVariable("project")
     @Pattern(regexp = "[a-z]+") //
     final String projectName,
@@ -136,11 +136,11 @@ public class VersionBuildController {
 
   @Schema
   private record BuildResponse(
-    @Schema(name = "project_id", pattern = "[a-z]+", example = "geyser")
+    @Schema(name = "project_id", pattern = "[a-z]+", example = "pandaspigot")
     String project_id,
-    @Schema(name = "project_name", example = "Geyser")
+    @Schema(name = "project_name", example = "PandaSpigot")
     String project_name,
-    @Schema(name = "version", pattern = Version.PATTERN, example = "2.1.0")
+    @Schema(name = "version", pattern = Version.PATTERN, example = "1.8.8")
     String version,
     @Schema(name = "build", pattern = "\\d+", example = "30")
     int build,
