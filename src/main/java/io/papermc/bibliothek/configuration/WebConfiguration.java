@@ -23,6 +23,7 @@
  */
 package io.papermc.bibliothek.configuration;
 
+import am.ik.webhook.spring.WebhookVerifierRequestBodyAdvice;
 import jakarta.servlet.Filter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,5 +34,10 @@ class WebConfiguration {
   @Bean
   Filter shallowETagHeaderFilter() {
     return new ShallowEtagHeaderFilter();
+  }
+
+  @Bean
+  public WebhookVerifierRequestBodyAdvice webhookVerifierRequestBodyAdvice(final AppConfiguration configuration) {
+    return WebhookVerifierRequestBodyAdvice.githubSha256(configuration.getWebhookSecret());
   }
 }

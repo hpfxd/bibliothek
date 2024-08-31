@@ -36,6 +36,8 @@ public class AppConfiguration {
   private String apiTitle;
   private String apiVersion;
   private @NotNull Path storagePath;
+  private String webhookSecret;
+  private String githubToken;
 
   @SuppressWarnings("checkstyle:MethodName")
   public URL getApiBaseUrl() {
@@ -75,5 +77,25 @@ public class AppConfiguration {
   @SuppressWarnings("checkstyle:MethodName")
   public void setStoragePath(final Path storagePath) {
     this.storagePath = storagePath;
+  }
+
+  @SuppressWarnings("checkstyle:MethodName")
+  public String getWebhookSecret() {
+    return this.webhookSecret;
+  }
+
+  @SuppressWarnings("checkstyle:MethodName")
+  public void setWebhookSecret(final String webhookSecret) {
+    this.webhookSecret = webhookSecret;
+  }
+
+  @SuppressWarnings("checkstyle:MethodName")
+  public String getGithubToken() {
+    return this.githubToken;
+  }
+
+  @SuppressWarnings("checkstyle:MethodName")
+  public void setGithubToken(final String githubToken) {
+    this.githubToken = githubToken;
   }
 }

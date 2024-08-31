@@ -39,6 +39,7 @@ dependencies {
   checkstyle(libs.stylecheck)
   implementation(libs.jetbrains.annotations)
   implementation(libs.springdoc.openapi.starter.webmvc.ui)
+  implementation(libs.webhook.verifier)
   implementation("org.springframework.boot", "spring-boot-starter-data-mongodb")
   implementation("org.springframework.boot", "spring-boot-starter-validation")
   implementation("org.springframework.boot", "spring-boot-starter-web")

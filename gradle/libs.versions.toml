@@ -12,3 +12,4 @@ spring-dependency-management = { id = "io.spring.dependency-management", version
 jetbrains-annotations = { group = "org.jetbrains", name = "annotations", version = "24.1.0" }
 springdoc-openapi-starter-webmvc-ui = { group = "org.springdoc", name = "springdoc-openapi-starter-webmvc-ui", version = "2.3.0" }
 stylecheck = { group = "ca.stellardrift", name = "stylecheck", version = "0.2.1" }
+webhook-verifier = { group = "am.ik.webhook", name = "webhook-verifier", version = "0.1.2" }
