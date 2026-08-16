@@ -1,7 +1,7 @@
 ARG JAVA_VERSION=17
 ARG JVM_FLAVOR=hotspot
 
-FROM openjdk:${JAVA_VERSION}-jdk-slim AS builder
+FROM eclipse-temurin:${JAVA_VERSION}-jdk AS builder
 WORKDIR /build
 
 COPY ./ ./
@@ -11,7 +11,7 @@ RUN ./gradlew clean buildForDocker --no-daemon
 ARG JAVA_VERSION
 ARG JVM_FLAVOR
 
-FROM openjdk:${JAVA_VERSION}-slim
+FROM eclipse-temurin:${JAVA_VERSION}-jre
 WORKDIR /app
 
 # Install curl for the healthcheck
