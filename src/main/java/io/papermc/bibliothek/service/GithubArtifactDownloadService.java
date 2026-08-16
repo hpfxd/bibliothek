@@ -35,16 +35,11 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
@@ -106,8 +101,6 @@ public class GithubArtifactDownloadService {
     }
 
     try {
-      final Path path = this.downloadArtifactToStorage(artifact);
-
       final Path outputDirectory = this.appConfiguration.getStoragePath()
         .resolve(project.name())
         .resolve(version.name())
@@ -115,9 +108,7 @@ public class GithubArtifactDownloadService {
 
       Files.createDirectories(outputDirectory);
 
-      final List<Build.Download> downloads = this.extractArtifactZip(path, outputDirectory);
-
-      Files.deleteIfExists(path); // Temp file is no longer needed
+      final List<Build.Download> downloads = this.downloadArtifact(artifact, outputDirectory);
 
       return CompletableFuture.completedFuture(downloads);
     } catch (Exception e) {
@@ -125,8 +116,18 @@ public class GithubArtifactDownloadService {
     }
   }
 
-  private Path downloadArtifactToStorage(final ArtifactsResponse.Artifact artifact) throws IOException {
-    final Path path = Files.createTempFile("bibliothek-artifact", ".zip");
+  private List<Build.Download> downloadArtifact(
+    final ArtifactsResponse.Artifact artifact,
+    final Path outputDirectory
+  ) {
+    final Path targetPath = outputDirectory.resolve(artifact.name());
+
+    final MessageDigest digest;
+    try {
+      digest = MessageDigest.getInstance("SHA-256");
+    } catch (NoSuchAlgorithmException e) {
+      throw new RuntimeException(e);
+    }
 
     final RequestCallback requestCallback = request -> {
       request.getHeaders().setAccept(List.of(MediaType.APPLICATION_OCTET_STREAM, MediaType.ALL));
@@ -137,7 +138,19 @@ public class GithubArtifactDownloadService {
       if (!response.getStatusCode().is2xxSuccessful()) {
         throw new IOException("Failed to download artifact; got code " + response.getStatusCode());
       }
-      Files.copy(response.getBody(), path, StandardCopyOption.REPLACE_EXISTING);
+
+      try (final InputStream in = response.getBody();
+           final OutputStream out = Files.newOutputStream(targetPath)) {
+
+        final byte[] buffer = new byte[8192];
+
+        int read;
+        while ((read = in.read(buffer)) >= 0) {
+          digest.update(buffer, 0, read);
+          out.write(buffer, 0, read);
+        }
+      }
+
       return null;
     };
 
@@ -145,50 +158,13 @@ public class GithubArtifactDownloadService {
       HttpMethod.GET,
       requestCallback,
       responseExtractor);
-    return path;
-  }
 
-  private List<Build.Download> extractArtifactZip(final Path path, final Path outputDirectory) throws IOException {
-    final List<Build.Download> result = new ArrayList<>();
-
-    try (final ZipFile zipFile = new ZipFile(path.toFile())) {
-      for (final Enumeration<? extends ZipEntry> entries = zipFile.entries(); entries.hasMoreElements(); ) {
-        final ZipEntry entry = entries.nextElement();
-
-        if (entry.isDirectory()) {
-          continue;
-        }
-
-        // this zip is hopefully from a trusted source, but note that entries could use ".." and escape the output directory
-        final Path targetPath = outputDirectory.resolve(entry.getName());
-
-        final MessageDigest digest;
-        try {
-          digest = MessageDigest.getInstance("SHA-256");
-        } catch (NoSuchAlgorithmException e) {
-          throw new RuntimeException(e);
-        }
-
-        try (final InputStream in = zipFile.getInputStream(entry);
-             final OutputStream out = Files.newOutputStream(targetPath)) {
-          final byte[] buffer = new byte[8192];
-
-          // read the file from the ZIP, and write to the output file as well as update the MessageDigest to calculate hash
-
-          int read;
-          while ((read = in.read(buffer, 0, buffer.length)) >= 0) {
-            digest.update(buffer, 0, read);
-            out.write(buffer, 0, read);
-          }
-        }
-
-        final byte[] hash = digest.digest();
-
-        result.add(new Build.Download(entry.getName(), HexUtils.toHex(hash)));
-      }
-    }
-
-    return result;
+    return List.of(
+      new Build.Download(
+        artifact.name(),
+        HexUtils.toHex(digest.digest())
+      )
+    );
   }
 
   private record ArtifactsResponse(
